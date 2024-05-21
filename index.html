@@ -1,9 +1,343 @@
 <!DOCTYPE html>
-<html>
-<body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>World Happiness</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script type="text/javascript">
+    google.charts.load('current', {
+      'packages': ['geochart', 'corechart']
+    });
+    google.charts.setOnLoadCallback(drawCharts);
 
-<h1>My First Heading</h1>
-<p>My first paragraph.</p>
+    function drawCharts() {
+      drawStackedBarChart();
+      drawMapAndBubbleChart();
+      drawScatterPlots(); 
+      drawLineChart();
+    }
+
+    function drawStackedBarChart() {
+  fetch('World-happiness-report-2024.csv')
+    .then(response => response.text())
+    .then(csvText => {
+      Papa.parse(csvText, {
+        header: true,
+        complete: function(results) {
+          var data = new google.visualization.DataTable();
+          data.addColumn('string', 'Regional Indicator');
+          data.addColumn('number', 'Social Support');
+          data.addColumn('number', 'Freedom to Make Life Choices');
+          data.addColumn('number', 'Generosity');
+          data.addColumn('number', 'Perceptions of Corruption'); // Add the new column
+
+          var regionData = {};
+
+          results.data.forEach(row => {
+            var region = row['Regional indicator'];
+            if (!regionData[region]) {
+              regionData[region] = {
+                'Social Support': 0,
+                'Freedom to Make Life Choices': 0,
+                'Generosity': 0,
+                'Perceptions of Corruption': 0, // Initialize the new column
+                'Count': 0,
+                'Ladder score': 0 // Add Ladder score for sorting
+              };
+            }
+            regionData[region]['Social Support'] += parseFloat(row['Social support']) || 0;
+            regionData[region]['Freedom to Make Life Choices'] += parseFloat(row['Freedom to make life choices']) || 0;
+            regionData[region]['Generosity'] += parseFloat(row['Generosity']) || 0;
+            regionData[region]['Perceptions of Corruption'] += parseFloat(row['Perceptions of corruption']) || 0; // Accumulate the new column
+            regionData[region]['Ladder score'] += parseFloat(row['Ladder score']) || 0; // Accumulate Ladder score
+            regionData[region]['Count']++;
+          });
+
+          Object.keys(regionData)
+            .sort((a, b) => regionData[b]['Ladder score'] / regionData[b]['Count'] - regionData[a]['Ladder score'] / regionData[a]['Count']) // Sort by average Ladder score
+            .forEach(region => {
+              regionData[region]['Social Support'] /= regionData[region]['Count'];
+              regionData[region]['Freedom to Make Life Choices'] /= regionData[region]['Count'];
+              regionData[region]['Generosity'] /= regionData[region]['Count'];
+              regionData[region]['Perceptions of Corruption'] /= regionData[region]['Count']; // Calculate average for the new column
+              data.addRow([
+                region,
+                regionData[region]['Social Support'],
+                regionData[region]['Freedom to Make Life Choices'],
+                regionData[region]['Generosity'],
+                regionData[region]['Perceptions of Corruption'] // Add the new column to the row
+              ]);
+            });
+
+          var options = {
+            title: 'Regional Indicators for Key Factors',
+            isStacked: true,
+            hAxis: { title: 'Regional Indicator' },
+            vAxis: { title: 'Value' },
+            series: {
+              0: { color: '#3F51B5' },
+              1: { color: '#FF5722' },
+              2: { color: '#4CAF50' },
+              3: { color: '#2196F3' } // Add color for the new series
+            }
+          };
+
+          var chart = new google.visualization.ColumnChart(document.getElementById('stacked_bar_chart_div'));
+          chart.draw(data, options);
+        }
+      });
+    })
+    .catch(error => console.error('Error fetching the CSV file:', error));
+}
+
+
+    function drawMapAndBubbleChart() {
+      fetch('World-happiness-report-2024.csv')
+        .then(response => response.text())
+        .then(csvText => {
+          Papa.parse(csvText, {
+            header: true,
+            complete: function(results) {
+              var mapData = new google.visualization.DataTable();
+              mapData.addColumn('string', 'Country');
+              mapData.addColumn('number', 'Happiness Score');
+
+              var bubbleData = new google.visualization.DataTable();
+              bubbleData.addColumn('string', 'Region');
+              bubbleData.addColumn('number', 'Average Social Support');
+              bubbleData.addColumn('number', 'Average Healthy Life Expectancy');
+              bubbleData.addColumn('number', 'Average Happiness Score');
+
+              var regionData = {};
+              var regionCount = {};
+
+              results.data.forEach(row => {
+                var country = row['Country name'] || 'Unknown';
+                var region = row['Regional indicator'] || 'Unknown';
+                var socialSupport = parseFloat(row['Social support']) || 0;
+                var lifeExpectancy = parseFloat(row['Healthy life expectancy']) || 0;
+                var happinessScore = parseFloat(row['Ladder score']) || 0;
+
+                if (!isNaN(happinessScore)) {
+                  mapData.addRow([country, happinessScore]);
+
+                  if (!regionData[region]) {
+                    regionData[region] = { socialSupport: 0, lifeExpectancy: 0, happinessScore: 0 };
+                    regionCount[region] = 0;
+                  }
+
+                  regionData[region].socialSupport += socialSupport;
+                  regionData[region].lifeExpectancy += lifeExpectancy;
+                  regionData[region].happinessScore += happinessScore;
+                  regionCount[region]++;
+                }
+              });
+
+              // Calculate average scores for each region
+              for (var region in regionData) {
+                var count = regionCount[region];
+                regionData[region].socialSupport /= count;
+                regionData[region].lifeExpectancy /= count;
+                regionData[region].happinessScore /= count;
+
+                // Add data to bubble chart DataTable
+                bubbleData.addRow([
+                  region,
+                  regionData[region].socialSupport,
+                  regionData[region].lifeExpectancy,
+                  regionData[region].happinessScore
+                ]);
+              }
+
+              var mapOptions = {
+                region: 'world',
+                resolution: 'countries',
+                colorAxis: { colors: ['#f0f0f0', '#3F51B5'] },
+                backgroundColor: '#81d4fa',
+                datalessRegionColor: '#ffffff',
+                defaultColor: '#f5f5f5'
+              };
+
+              var bubbleOptions = {
+                title: 'Average Social Support, Healthy Life Expectancy, and Happiness Score by Region',
+                hAxis: { title: 'Average Social Support', viewWindow: { min: 0.5} },
+                vAxis: { title: 'Average Healthy Life Expectancy', viewWindow: { min: 0.2 } },
+                bubble: { textStyle: { fontSize: 8 }, maxSize: 25 },
+                colors: ['#3F51B5']
+              };
+
+              var mapChart = new google.visualization.GeoChart(document.getElementById('map_div'));
+              mapChart.draw(mapData, mapOptions);
+
+              var bubbleChart = new google.visualization.BubbleChart(document.getElementById('bubble_chart_div'));
+              bubbleChart.draw(bubbleData, bubbleOptions);
+            }
+          });
+        })
+        .catch(error => console.error('Error fetching the CSV file:', error));
+    }
+    function drawScatterPlots() {
+  fetch('World-happiness-report-2024.csv')
+    .then(response => response.text())
+    .then(csvText => {
+      Papa.parse(csvText, {
+        header: true,
+        complete: function(results) {
+          var logGdpData = new google.visualization.DataTable();
+          logGdpData.addColumn('number', 'Log GDP per capita');
+          logGdpData.addColumn('number', 'Happiness Score');
+
+          results.data.forEach(row => {
+            var logGdp = parseFloat(row['Log GDP per capita']) || 0;
+            var happinessScore = parseFloat(row['Ladder score']) || 0;
+
+            logGdpData.addRow([logGdp, happinessScore]);
+          });
+
+          var logGdpOptions = {
+            title: 'Happiness Score vs. Log GDP per Capita',
+            hAxis: { title: 'Log GDP per capita' },
+            vAxis: { title: 'Happiness Score' },
+            legend: 'none',
+            colors: ['#3F51B5']
+          };
+
+          var logGdpChart = new google.visualization.ScatterChart(document.getElementById('log_gdp_scatter_div'));
+          logGdpChart.draw(logGdpData, logGdpOptions);
+        }
+      });
+    })
+    .catch(error => console.error('Error fetching the CSV file:', error));
+}
+function drawLineChart() {
+  fetch('World-happiness-report-updated_2024.csv')
+    .then(response => response.text())
+    .then(csvText => {
+      Papa.parse(csvText, {
+        header: true,
+        complete: function(results) {
+          var data = new google.visualization.DataTable();
+          data.addColumn('number', 'Year');
+          data.addColumn('number', 'Finland');
+          data.addColumn('number', 'United States');
+          data.addColumn('number', 'Lebanon');
+          data.addColumn('number', 'Afghanistan');
+          data.addColumn('number', 'Tunisia');
+
+          var countries = ['Finland', 'United States', 'Lebanon', 'Afghanistan', 'Tunisia'];
+          var countryData = {
+            'Finland': {},
+            'United States': {},
+            'Lebanon': {},
+            'Afghanistan': {},
+            'Tunisia': {}
+          };
+
+          // Process the CSV data
+          results.data.forEach(row => {
+            var country = row['Country name'];
+            var year = parseInt(row['year']);
+            var happinessScore = parseFloat(row['Life Ladder']);
+
+            if (countries.includes(country) && !isNaN(year) && !isNaN(happinessScore)) {
+              countryData[country][year] = happinessScore;
+            }
+          });
+
+          console.log('Processed country data:', countryData);
+
+          // Prepare the data rows
+          var years = [];
+          for (let year = 2007; year <= 2023; year++) {
+            years.push(year);
+          }
+
+          years.forEach(year => {
+            var row = [year];
+            countries.forEach(country => {
+              var ladderScore = null;
+              for (let y = year; y >= 2007; y--) {
+                if (countryData[country][y] !== undefined) {
+                  ladderScore = countryData[country][y];
+                  break;
+                }
+              }
+              row.push(ladderScore);
+            });
+            console.log('Adding row:', row);
+            data.addRow(row);
+          });
+
+          var options = {
+            title: 'Happiness Score Over Time for Selected Countries',
+            hAxis: {
+              title: 'Year',
+              format: '####',
+              gridlines: { count: years.length },
+              ticks: years.map(year => ({ v: year, f: year.toString() }))
+            },
+            vAxis: { title: 'Happiness Score' },
+            legend: { position: 'bottom' },
+            colors: ['#3F51B5', '#FF5722', '#4CAF50', '#2196F3', '#FFC107'],
+            pointSize: 5
+          };
+
+          var chart = new google.visualization.LineChart(document.getElementById('line_chart_div'));
+          chart.draw(data, options);
+        }
+      });
+    })
+    .catch(error => console.error('Error fetching the CSV file:', error));
+}
+
+google.charts.setOnLoadCallback(drawLineChart);
+
+  </script>
+</head>
+<body style=" margin-right: 20px; margin-left: 20px;">
+  <h1>Happiness Scores Across the World</h1>
+  <a href="https://www.kaggle.com/datasets/jainaru/world-happiness-report-2024-yearly-updated/data">Kaggle Dataset</a>
+ 
+  <div style="display: flex;">
+    <div  id="map_div" style="width: 900px; height: 500px; flex: 50%;"></div>
+  </div>
+  <p>In deciding to create a map illustrating global happiness scores, I considered the effectiveness of visualizing geographical 
+    distribution as a means of conveying happiness disparities worldwide. By color-coding countries based on their happiness scores, with darker 
+    shades representing higher scores, the map offers a quick and intuitive understanding of global happiness patterns. 
+    Based on this visualization, Scandinavia, North America, and ANZ (Australia, New Zealand) appears as regions with higher happiness scores.
+    Next, we'll visualize how social support (having relatives or friends to count on in times of trouble) and healthy life expectancy affect these scores.</p>
+  <div id="bubble_chart_div" style="width: 1400px; height: 500px;"></div>
+  <p>Based on this visualization, people are happier when they know they can rely on their family and friends in times of trouble, and when they have a higher healthy life expectancy (Or maybe they live longer because they are happy &#128516;).</p>
+  <div style="display: flex;">
+
+  <div id="stacked_bar_chart_div" style="display: flex;width: 900px; height: 500px; flex: 50%;">
+</div>
+
+<div style="flex: 50%;"></p>
+    <br><br>
+    <ul>
+        <li><strong>Social Support:</strong> The national average of binary responses (0 or 1) to the question about having relatives or friends to count on in times of trouble.</li>
+        <li><strong>Healthy Life Expectancy:</strong> The average number of years a newborn infant would live in good health, based on mortality rates and life expectancy at different ages.</li>
+        <li><strong>Freedom to Make Life Choices:</strong> The national average of responses to the question about satisfaction with freedom to choose what to do with one's life.</li>
+        <li><strong>Generosity:</strong> The residual of regressing the national average of responses to the question about donating money to charity on GDP per capita.</li>
+        <li><strong>Perceptions of Corruption:</strong> The national average of survey responses to questions about the perceived extent of corruption in the government and businesses.</li>
+    </ul>
+
+<p>The regions are plotted on the x-axis sorted based on their happiness scores. 
+The chart indicates a correlation between happiness levels and factors such as social support, healthy life expectancy, freedom to make life choices, generosity, 
+and perceptions of corruption. The next scatter plot illustrates how GDP and happiness score are also correlated.</p>
+</div>
+  </div>
+  <div id="log_gdp_scatter_div" style="width: 700px; height: 500px;"></div>
+  <div id="line_chart_div" style="width: 1400px; height: 500px;"></div>
+  <p>
+    Throughout the observed period, Finland, the United States, and Tunisia have maintained relatively stable happiness scores. 
+    In contrast, Lebanon and Afghanistan experienced significant declines in happiness scores, notably in the years 2021 and 2022. 
+    This highlight the dynamic nature of happiness levels within different nations, with factors such as socio-economic 
+    conditions, political stability, and societal well-being potentially influencing these variations over time.
+  </p>
 
 </body>
 </html>
