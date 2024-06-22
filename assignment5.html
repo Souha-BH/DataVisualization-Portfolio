@@ -113,19 +113,19 @@
                 <li><b>Create a new project: </b> Delete the example project and click on +New. You can rename your
                     project whatever you want.<br>
                     <img style=" border-radius: 8px; max-width: 1200px; position:relative;"
-                        src="/images/createnewproject.png" />
+                        src="images/createnewproject.png" />
                 </li>
                 <li><b>Add a DBMS <br></b>
                     <img style=" border-radius: 8px; max-width: 1200px; position:relative;"
-                        src="/images/CreateDBMS.png" />
+                        src="images/CreateDBMS.png" />
                     <p>Name your DB, and give it a password, then click on "Create". This might take few moments. Once
                         you're done creating your DB, go ahead and start it.
                         The DB is where we're going to store our nodes and our relationships.</p>
-                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="/images/startDB.png" />
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="images/startDB.png" />
                 </li>
                 <li>
                     From the Graph Apps, <b>open Neo4j Browser</b>: <br>
-                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="/images/browser.png" />
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="images/browser.png" />
                     This will redirect you to Neo4j Browser, available at localhost:7687.
 
                 </li>
@@ -155,17 +155,17 @@
                         (eve)-[:KNOWS]->(alice);</code>
                     <br>
                     <img style=" border-radius: 8px; max-width: 1200px; position:relative;"
-                        src="/images/createdata.png" />
+                        src="images/createdata.png" />
                 </li>
                 <li><b>Verify the Creation of Nodes and Relationships</b> by running these queries: <br>
                     <code>MATCH (p:Person) RETURN p;</code><br>
                     It should return the following: <br>
                     <img style=" border-radius: 8px; max-width: 1200px; position:relative;"
-                        src="/images/returnpersons.png" />
+                        src="images/returnpersons.png" />
                     <code>MATCH (n:Person)-[r:KNOWS]->(m:Person) RETURN n, r, m;</code><br>
                     It should return the following:<br>
                     <img style=" border-radius: 8px; max-width: 1200px; position:relative;"
-                        src="/images/returnrelationships.png" />
+                        src="images/returnrelationships.png" />
                 </li>
                 <li>Now that we made sure that our nodes and relationships were created successfully, let's get more
                     familiar with Cypher by <b>running few more queries</b>:
@@ -187,9 +187,9 @@
                     displaying nodes as circles and relationships as arrows. This is useful for visually exploring the
                     network and understanding the connections. <br>
                     Let's visualize few of our previous queries:
-                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="/images/bobknows.png" />
-                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="/images/aliceconnected.png" />
-                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="/images/allrelationships.png" />
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="images/bobknows.png" />
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="images/aliceconnected.png" />
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="images/allrelationships.png" />
                 </li>
                 <li><b>Congrats, you now know the basics of Neo4j!</b> If you're interested in more, visit <a href="https://neo4j.com/docs/getting-started/appendix/tutorials/tutorials-overview/">this link</a>. </li>
 
