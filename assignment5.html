@@ -1,0 +1,211 @@
+<!DOCTYPE HTML>
+<!--
+	Phantom by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+
+<head>
+    <title>World Happiness - Phantom by HTML5 UP</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <noscript>
+        <link rel="stylesheet" href="assets/css/noscript.css">
+    </noscript>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script type="text/javascript">
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .image-container {
+            text-align: center;
+        }
+
+        .image-container img {
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+
+        }
+
+        .image-container.after img {
+            max-width: 800px;
+            /* Wider width for the "After" image */
+        }
+
+        .caption {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .paragraph {
+            max-width: 80%;
+            margin: 20px auto;
+            text-align: center;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body class="is-preload">
+    <!-- Wrapper -->
+    <div id="wrapper">
+        <!-- Header -->
+        <header id="header">
+            <div class="inner">
+                <a href="index.html" class="logo">
+                    <span class="symbol"><img src="images/logo.svg" alt=""></span><span class="title">Phantom</span>
+                </a>
+                <nav>
+                    <ul>
+                        <li><a href="#menu">Menu</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+        <!-- Menu -->
+        <nav id="menu">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="assignment1.html">Assignment 1</a></li>
+                <li><a href="assignment2.html">Assignment 2</a></li>
+                <li><a href="assignment3.html" </a>Assignment 3</li>
+                <li><a href="assignment4.html">Assignment 4</a></li>
+                <li><a href="assignment5.html">Assignment 5</a></li>
+            </ul>
+        </nav>
+        <!-- Main Content -->
+        <div style="padding: 3cm;">
+            <h1>Neo4j Tutorial</h1>
+            Neo4j is a graph database management system (GDBMS) developed by Neo4j, Inc. The data elements Neo4j stores
+            are nodes, edges connecting them, and attributes of nodes and edges.
+            <ol>
+                <li>
+                    <b><a href="https://neo4j.com/download/">Download and Install:</a></b>
+                    <p>Choose the appropriate version for your operating system and follow the installation
+                        instructions.
+                        Copy your activation key (You will need it to install the software).
+                </li>
+
+                <li><b>Start Neo4j:</b> Launch Neo4j Desktop.</li>
+
+                <li><b>Create a new project: </b> Delete the example project and click on +New. You can rename your
+                    project whatever you want.<br>
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;"
+                        src="/images/createnewproject.png" />
+                </li>
+                <li><b>Add a DBMS <br></b>
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;"
+                        src="/images/CreateDBMS.png" />
+                    <p>Name your DB, and give it a password, then click on "Create". This might take few moments. Once
+                        you're done creating your DB, go ahead and start it.
+                        The DB is where we're going to store our nodes and our relationships.</p>
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="/images/startDB.png" />
+                </li>
+                <li>
+                    From the Graph Apps, <b>open Neo4j Browser</b>: <br>
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="/images/browser.png" />
+                    This will redirect you to Neo4j Browser, available at localhost:7687.
+
+                </li>
+                <li>Now, we're going to <b> query our database DB1 using Cypher. </b> Cypher is Neo4j’s graph query
+                    language that
+                    lets you retrieve data from the graph. It is like SQL for graphs, and was inspired by SQL so it lets
+                    you focus on what data you want out of the graph (not how to go get it).
+                    It is the easiest graph language to learn by far because of its similarity to other languages and
+                    intuitiveness.<br>
+                    We'll use a simple dataset that represents <b>a social network of people who know each other.</b>
+                    Our dataset comprises nodes (persons) and relationships (knows). Copy the following query into a
+                    Neo4j cell and run it.
+                    You can also personalize your nodes and relationships.
+                    <br>
+                    <code>
+                        CREATE
+                        (alice:Person {name: 'Alice', age: 30}),
+                        (bob:Person {name: 'Bob', age: 25}),
+                        (carol:Person {name: 'Carol', age: 35}),
+                        (dave:Person {name: 'Dave', age: 40}),
+                        (eve:Person {name: 'Eve', age: 28}),
+                        (alice)-[:KNOWS]->(bob),
+                        (alice)-[:KNOWS]->(carol),
+                        (bob)-[:KNOWS]->(dave),
+                        (carol)-[:KNOWS]->(dave),
+                        (dave)-[:KNOWS]->(eve),
+                        (eve)-[:KNOWS]->(alice);</code>
+                    <br>
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;"
+                        src="/images/createdata.png" />
+                </li>
+                <li><b>Verify the Creation of Nodes and Relationships</b> by running these queries: <br>
+                    <code>MATCH (p:Person) RETURN p;</code><br>
+                    It should return the following: <br>
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;"
+                        src="/images/returnpersons.png" />
+                    <code>MATCH (n:Person)-[r:KNOWS]->(m:Person) RETURN n, r, m;</code><br>
+                    It should return the following:<br>
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;"
+                        src="/images/returnrelationships.png" />
+                </li>
+                <li>Now that we made sure that our nodes and relationships were created successfully, let's get more
+                    familiar with Cypher by <b>running few more queries</b>:
+                    <ul>
+                        <li>Find all people and their ages: <br> <code>MATCH (p:Person) RETURN p.name, p.age;</code>
+                        </li>
+                        <li>Find who Bob knows: <br>
+                            <code>MATCH (bob:Person {name: 'Bob'})-[:KNOWS]->(friend) RETURN friend;</code></li>
+                        <li>Count the number of people in the network: <br>
+                            <code>MATCH (p:Person) RETURN COUNT(p);</code></li>
+                        <li>List all relationships and their types: <br>
+                            <code>MATCH (n:Person)-[r]->(m:Person) RETURN n.name, type(r), m.name;</code></li>
+                        <li>Find people who are directly or indirectly connected to Alice: <br> <code>MATCH (alice:Person {name: 'Alice'})-[:KNOWS*]-(connectedPerson)
+                            RETURN DISTINCT connectedPerson;</code></li>
+                    </ul>
+                </li>
+                <li><b>Visualizing Results in Neo4j Browser: Graph View:</b>
+                    Neo4j Browser automatically visualizes your query results in a graph view,
+                    displaying nodes as circles and relationships as arrows. This is useful for visually exploring the
+                    network and understanding the connections. <br>
+                    Let's visualize few of our previous queries:
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="/images/bobknows.png" />
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="/images/aliceconnected.png" />
+                    <img style=" border-radius: 8px; max-width: 1200px; position:relative;" src="/images/allrelationships.png" />
+                </li>
+                <li><b>Congrats, you now know the basics of Neo4j!</b> If you're interested in more, visit <a href="https://neo4j.com/docs/getting-started/appendix/tutorials/tutorials-overview/">this link</a>. </li>
+
+            </ol>
+        </div>
+
+
+
+    </div>
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+    <!-- Your script tags for Google Charts and other libraries -->
+</body>
+
+</html>
