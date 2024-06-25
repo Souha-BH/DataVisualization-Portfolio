@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Impact Visualization and Cancer Trends</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            color: black;
+            background: url("") no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .chart {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .label {
+            font-size: 14px;
+            fill: #666;
+        }
+
+        .title {
+            text-anchor: middle;
+            font-size: 16px;
+            fill: #333;
+            font-weight: bold;
+        }
+
+        .description {
+            text-anchor: middle;
+            font-size: 12px;
+            fill: #333;
+        }
+
+        .graph-container {
+            width: 80%;
+            max-width: 800px;
+        }
+
+        .top-panel {
+            width: 100%;
+        }
+
+        .map-panel {
+            height: 600px;
+            margin-bottom: 20px;
+
+            width: 100%;
+        }
+
+        .column {
+            float: left;
+            width: 50%;
+            padding: 10px;
+            height: 300px;
+            /* Should be removed. Only for demonstration */
+        }
+
+        /* Clear floats after the columns */
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .heatmap-section {
+            text-align: center;
+        }
+
+        .emoji-panel {
+            max-height: 400px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(20px, 1fr));
+        }
+
+        .emoji-panel span {
+            font-size: 15px;
+            margin: 2px;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .legend {
+            background: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            color: black;
+        }
+
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+
+        select {
+            width: 100%;
+            padding: 5px;
+            margin: 20px 0;
+        }
+
+        h2 {
+            margin-top: 20px;
+        }
+
+        .dropdown {
+            margin: 20px;
+        }
+
+        .plot-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        .plot-container>div {
+            width: 45%;
+        }
+
+        .comparison-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 30%;
+        }
+
+        .img-responsive {
+            width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="top-panel">
+            <h1 style="
+            color: navy;
+            font-size: 50px;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
+              'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+          ">
+                Hiroshima Bombing Impact Visualization 💣
+            </h1>
+            <p style="font-size: 20px; font-family: Arial, Helvetica, sans-serif">
+                The Hiroshima bombing on <b>August 6, 1945</b>, marked a profound
+                moment in human history, representing the
+                <b>first use of nuclear weapons in warfare</b>. Dropped by the
+                American B-29 bomber Enola Gay, the atomic bomb known as
+                <b>"Little Boy"</b>
+                detonated approximately 1,900 feet above the city, instantly
+                devastating Hiroshima. The explosion released an immense amount of
+                energy—equivalent to 15 kilotons of TNT—resulting in a mushroom cloud
+                that towered to 40,000 feet and a blast that decimated nearly
+                everything within a mile radius. The immediate impact killed tens of
+                thousands of people, with the death toll rising to around 140,000 by
+                the end of 1945 due to radiation exposure and injuries. This tragic
+                event not only obliterated a thriving city but also left a lasting
+                legacy that profoundly affected global politics, scientific research,
+                and humanitarian principles. This project aims to convey the scale and
+                impact of the Hiroshima bombing through various interactive
+                visualizations, offering a comprehensive understanding of its
+                repercussions on both the human and environmental levels.
+            </p>
+        </div>
+        <div class="map-panel">
+            <h2 style="color: navy">
+                Visualize the Impact Radius: See How Hiroshima's Radiation Would
+                Affect Your City
+            </h2>
+            <select id="citySelect"></select>
+            <div id="map"></div>
+        </div>
+    </div>
+    <div style="display: flex">
+        <div style="flex: 0 0 30%; padding: 20px; box-sizing: border-box">
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+
+            <h2 style="color: navy">Comparison Of Mushroom Cloud Heights</h2>
+            <p style="font-size: 20px; font-family: Arial, Helvetica, sans-serif">
+                <br />
+                To grasp the magnitude of the <b>"Little Boy"</b> bomb, consider that
+                it had an explosive yield equivalent to <b>15 kilotons of TNT</b>. In
+                comparison, the powerful thermonuclear bomb <b>"Tsar Bomba"</b>,
+                tested by the <b>Soviet Union</b>, had a yield of 50 megatons,
+                <b>over 3,000 times greater</b>. The Hiroshima bomb's explosion
+                <b>reached temperatures hotter than the surface of the sun</b> and
+                released devastating blast waves and radiation.
+                <br />
+                The destructive power of nuclear bombs can also be visualized by
+                comparing the heights of the mushroom clouds they produce. The "Little
+                Boy" bomb dropped on Hiroshima generated a mushroom cloud that rose to
+                about <b>40,000 feet (12,192 meters)</b> into the sky. In comparison,
+                the "Fat Man" bomb dropped on <b>Nagasaki</b> created a mushroom cloud
+                reaching around <b>60,000 feet (18,288 meters)</b>. The largest
+                nuclear explosion ever, "Tsar Bomba," produced a mushroom cloud that
+                soared to an astonishing height of
+                <b>210,000 feet (64,000 meters)</b>, more than five times the height
+                of Mount Everest, which stands at <b>29,032 feet (8,848 meters)</b>.
+            </p>
+        </div>
+        <div class="tableauPlaceholder" id="viz1719209140145"
+            style="flex: 0 0 70%; padding: 20px; box-sizing: border-box">
+            <br />
+            <noscript><a href="#"><img alt="Dashboard 1 "
+                        src="https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;pr&#47;project_17192085712970&#47;Dashboard1&#47;1_rss.png"
+                        style="border: none" /></a></noscript><object class="tableauViz" style="display: none">
+                <param name="host_url" value="https%3A%2F%2Fpublic.tableau.com%2F" />
+                <param name="embed_code_version" value="3" />
+                <param name="site_root" value="" />
+                <param name="name" value="project_17192085712970&#47;Dashboard1" />
+                <param name="tabs" value="no" />
+                <param name="toolbar" value="yes" />
+                <param name="static_image"
+                    value="https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;pr&#47;project_17192085712970&#47;Dashboard1&#47;1.png" />
+                <param name="animate_transition" value="yes" />
+                <param name="display_static_image" value="yes" />
+                <param name="display_spinner" value="yes" />
+                <param name="display_overlay" value="yes" />
+                <param name="display_count" value="yes" />
+                <param name="language" value="en-US" />
+            </object>
+        </div>
+    </div>
+    <div style="display: flex">
+        <div style="flex: 0 0 30%; padding: 20px; box-sizing: border-box">
+            <h2 style="color: navy">Number of Deaths as of December 1945</h2>
+
+            <p style="font-size: 20px; font-family: Arial, Helvetica, sans-serif">
+                The Hiroshima bombing resulted in a catastrophic loss of life, with an
+                estimated <b>140,000 people</b> succumbing to the effects
+                <b>by the end of 1945</b>. Prior to the bombing, Hiroshima was a
+                bustling city with a population of approximately
+                <b>350,000 people</b>. On the day of the bombing, approximately
+                <b>70,000-80,000 people were killed instantly</b> from the immense
+                blast and intense heat. Many of the survivors suffered severe
+                injuries, burns, and radiation sickness, leading to a significant
+                number of deaths in the ensuing weeks and months.
+            </p>
+        </div>
+        <div class="emoji-panel" style="flex: 0 0 70%; padding: 20px; box-sizing: border-box" id="emojiPanel"></div>
+    </div>
+    <div class="container">
+        <h1 style="color: navy; text-align: center">
+            How about those who didn't die?
+        </h1>
+        <p style="font-size: 20px; font-family: Arial, Helvetica, sans-serif">
+            The high levels of radiation exposure caused long-term health effects,
+            including various cancers and chronic illnesses, further contributing to
+            the death toll in the years that followed. Countless survivors developed
+            various forms of cancer, including leukemia and thyroid, breast, and
+            lung cancers, due to the high levels of radiation exposure. Beyond
+            cancer, survivors also experienced chronic illnesses and genetic
+            mutations that affected subsequent generations. Psychological trauma was
+            pervasive as well, with many grappling with the emotional and mental
+            impact of such a profound catastrophe.
+        </p>
+        <h3 style="color: navy">
+            Trends in Age-Adjusted Death Rates for Selected Cancers in Japan
+        </h3>
+        <div class="dropdown">
+            <label for="cancer-select">Select Cancer Type:</label>
+            <select id="cancer-select"></select>
+            <button onclick="plotCancerTrends()">Plot</button>
+        </div>
+        <div class="plot-container">
+            <div id="male-plot"></div>
+            <div id="female-plot"></div>
+        </div>
+    </div>
+    <div style="display: flex">
+        <div class="graph-container" style="flex: 0 0 50%; padding: 20px; box-sizing: border-box">
+            <h2 style="color: navy; text-align: center">
+                Excess Relative Risk at 1 Gy by Attained Age and Age at Exposure
+            </h2>
+            <div id="plot"></div>
+        </div>
+        <div class="heatmap-section" style="flex: 0 0 50%; padding: 20px; box-sizing: border-box">
+            <h2 style="color: navy">
+                Untoward Pregnancy Outcomes by Parental Radiation Doses
+            </h2>
+            <div id="heatmap"></div>
+        </div>
+    </div>
+    <div>
+        <h2 style="color: navy; text-align: center">
+            Effects of the bombing at Hiroshima and Nagasaki from economic side
+        </h2>
+        <p style="
+          padding: 20px;
+          font-size: 20px;
+          font-family: Arial, Helvetica, sans-serif;
+        ">
+            The bombings of Hiroshima and Nagasaki not only caused profound human
+            suffering but also devastated the local economies. The immediate
+            aftermath saw the obliteration of industrial infrastructure, commercial
+            establishments, and residential buildings, which translated into a
+            massive loss of capital assets. With critical supply chains disrupted,
+            food became scarce, leading to severe shortages that forced many
+            inhabitants to turn to black markets for their basic needs. The
+            destruction of factories and businesses led to widespread unemployment,
+            as countless jobs vanished overnight. Markets struggled to operate under
+            the conditions of devastation and the economy plunged into turmoil. In
+            addition, rampant inflation and a severe lack of medical supplies
+            further strained the already crippled economy. Public services such as
+            transportation, water, and electricity were also heavily impacted,
+            exacerbating the dire living conditions.
+        </p>
+
+        <div id="loss-chart" class="plot"></div>
+    </div>
+    <h2 style="color: navy; text-align: center;">Photos: Hiroshima (1945-2015) </h2>
+    <p style="
+    padding: 20px;
+    font-size: 20px;
+    font-family: Arial, Helvetica, sans-serif;
+  ">Despite the devastation wrought by the bombings of Hiroshima and Nagasaki, Japan's economy underwent an
+        extraordinary resurgence in the decades following World War II. Today, it stands as the fourth-largest
+        economy globally, measured by gross domestic product (GDP). </p>
+    <div class="comparison-container">
+
+        <div class="column">
+            <img src="images/after1.jpg" class="img-responsive">
+        </div>
+        <div class="column">
+            <img src="images/after4.jpg" class="img-responsive">
+        </div>
+        <div class="column">
+            <img src="images/after5.jpg" class="img-responsive">
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var divElement = document.getElementById("viz1719209140145");
+        var vizElement = divElement.getElementsByTagName("object")[0];
+        if (divElement.offsetWidth > 800) {
+            vizElement.style.width = "1000px";
+            vizElement.style.height = "827px";
+        } else if (divElement.offsetWidth > 500) {
+            vizElement.style.width = "1000px";
+            vizElement.style.height = "827px";
+        } else {
+            vizElement.style.width = "100%";
+            vizElement.style.height = "1727px";
+        }
+        var scriptElement = document.createElement("script");
+        scriptElement.src =
+            "https://public.tableau.com/javascripts/api/viz_v1.js";
+        vizElement.parentNode.insertBefore(scriptElement, vizElement);
+    </script>
+
+    <script>
+        // Cities data with coordinates
+        const cities = {
+            Hiroshima: [34.383331, 132.449997],
+            "New York": [40.7128, -74.006],
+            London: [51.5074, -0.1278],
+            Tokyo: [35.6895, 139.6917],
+            Sydney: [-33.8688, 151.2093],
+            Paris: [48.8566, 2.3522],
+            Tunis: [36.806389, 10.181667],
+            Djerba: [33.8076, 10.8451],
+            Delhi: [28.7041, 77.1025],
+            Beijing: [39.9042, 116.4074],
+        };
+
+        // Populate the dropdown with cities
+        const citySelect = document.getElementById("citySelect");
+        for (const city in cities) {
+            const option = document.createElement("option");
+            option.value = city;
+            option.text = city;
+            citySelect.appendChild(option);
+        }
+
+        // Generate and display emojis
+        const emojiPanel = document.getElementById("emojiPanel");
+        const totalEmojis = 140000;
+        const batchSize = 1000;
+
+        function renderEmojis(batchIndex = 0) {
+            const batchStart = batchIndex * batchSize;
+            const batchEnd = Math.min((batchIndex + 1) * batchSize, totalEmojis);
+
+            for (let i = batchStart; i < batchEnd; i++) {
+                const span = document.createElement("span");
+                span.textContent = "👤";
+                emojiPanel.appendChild(span);
+            }
+
+            if (batchEnd < totalEmojis) {
+                requestAnimationFrame(() => renderEmojis(batchIndex + 1));
+            }
+        }
+
+        renderEmojis();
+
+        // Define the impact zones in kilometers
+        const hiroshimaHeavyFireDamageRadius = 1.83 * 1000;
+        const hiroshimaMaxHeavyFireDamageRadius = 3.35 * 1000;
+        const hiroshimaGlassDamageRadius = 19.31 * 1000;
+
+        const initialCoords = [34.383331, 132.449997];
+        const map = L.map("map").setView(initialCoords, 11);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution:
+                'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+
+        const hiroshimaImpactZones = {
+            heavyFireDamage: L.circle(initialCoords, {
+                color: "red",
+                fillColor: "#f03",
+                fillOpacity: 0.5,
+                radius: hiroshimaHeavyFireDamageRadius,
+            }).bindPopup("Heavy Fire Damage Zone (Approx. 6,000 feet radius)"),
+
+            maxHeavyFireDamage: L.circle(initialCoords, {
+                color: "orange",
+                fillColor: "#ff7800",
+                fillOpacity: 0.5,
+                radius: hiroshimaMaxHeavyFireDamageRadius,
+            }).bindPopup("Max Heavy Fire Damage Zone (Approx. 11,000 feet radius)"),
+
+            glassDamage: L.circle(initialCoords, {
+                color: "blue",
+                fillColor: "#30f",
+                fillOpacity: 0.3,
+                radius: hiroshimaGlassDamageRadius,
+            }).bindPopup("Glass Damage Zone (Approx. 12 miles radius)"),
+        };
+        // Add legend to map
+        var legend = L.control({ position: "bottomright" });
+
+        legend.onAdd = function (map) {
+            var div = L.DomUtil.create("div", "legend");
+            var grades = [
+                "Heavy Fire Damage",
+                "Max Heavy Fire Damage",
+                "Glass Damage",
+            ];
+            var colors = ["#f03", "#ff7800", "#30f"];
+
+            // Loop through our grades and generate a label with a colored square for each impact zone
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' +
+                    colors[i] +
+                    '"></i> ' +
+                    grades[i] +
+                    "<br>";
+            }
+
+            return div;
+        };
+
+        legend.addTo(map);
+        for (let key in hiroshimaImpactZones) {
+            hiroshimaImpactZones[key].addTo(map);
+        }
+
+        function updateMap() {
+            const selectedCity = cities[citySelect.value];
+            map.setView(selectedCity, 11);
+            for (let key in hiroshimaImpactZones) {
+                hiroshimaImpactZones[key].setLatLng(selectedCity);
+            }
+        }
+
+        citySelect.addEventListener("change", updateMap);
+
+        // Heatmap data and plot
+        const heatmapData = {
+            x: ["<0.01", "0.01-0.49", "≥0.50"],
+            y: ["<0.01", "0.01-0.49", "≥0.50"],
+            z: [
+                [5.0, 5.0, 5.7],
+                [4.8, 4.6, 4.5],
+                [6.1, 4.1, 8],
+            ],
+            type: "heatmap",
+            colorscale: "Sunset",
+        };
+
+        const heatmapLayout = {
+            title:
+                "Untoward pregnancy outcomes among A-bomb survivors in % (1948-1953)",
+            xaxis: { title: "Father’s weighted dose (Gy)" },
+            yaxis: { title: "Mother’s weighted dose (Gy)" },
+        };
+
+        Plotly.newPlot("heatmap", [heatmapData], heatmapLayout);
+
+        // Data preparation
+        var attained_age = [23, 30, 40, 50, 60, 70, 80, 90];
+
+        var err_age_10 = [3, 2.5, 1.7, 1.25, 1.0, null, null, null];
+        var err_age_30 = [null, null, 1.0, 0.9, 0.8, 0.7, 0.6, null];
+        var err_age_50 = [null, null, null, null, 0.6, 0.55, 0.51, 0.49];
+
+        var trace1 = {
+            x: attained_age,
+            y: err_age_10,
+            mode: "lines+markers",
+            name: "10",
+            line: { dash: "dot", width: 2 },
+        };
+
+        var trace2 = {
+            x: attained_age,
+            y: err_age_30,
+            mode: "lines+markers",
+            name: "30",
+            line: { dash: "solid", width: 2 },
+        };
+
+        var trace3 = {
+            x: attained_age,
+            y: err_age_50,
+            mode: "lines+markers",
+            name: "50",
+            line: { dash: "dashdot", width: 2 },
+        };
+
+        var data = [trace1, trace2, trace3];
+
+        var layout = {
+            title:
+                "Excess Relative Risk at 1 Gy by Attained Age and Age at Exposure",
+            xaxis: { title: "Attained age (years)" },
+            yaxis: { title: "Excess relative risk at 1 Gy", range: [0, 4] },
+            legend: { title: { text: "Age at exposure" } },
+        };
+
+        Plotly.newPlot("plot", data, layout);
+        // Cancer Trends Plot
+        let cancerCsvData;
+
+        function readCSV(file) {
+            Papa.parse(file, {
+                download: true,
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                complete: function (results) {
+                    cancerCsvData = results.data;
+                    populateDropdown(
+                        Object.keys(cancerCsvData[0])
+                            .filter((col) => !["Year"].includes(col) && col.endsWith("M"))
+                            .map((col) => col.replace(" M", ""))
+                    );
+                },
+            });
+        }
+
+        function populateDropdown(options) {
+            const select = document.getElementById("cancer-select");
+            options.forEach((option) => {
+                const opt = document.createElement("option");
+                opt.value = option;
+                opt.innerHTML = option;
+                select.appendChild(opt);
+            });
+        }
+
+        function customTransform(y) {
+            return y.map((value) => {
+                if (value <= 10) {
+                    return value / 2;
+                } else {
+                    return 5 + Math.log10(value);
+                }
+            });
+        }
+
+        function plotCancerTrends() {
+            const selectedCancer = document.getElementById("cancer-select").value;
+            const years = cancerCsvData.map((row) => row["Year"]);
+            const maleData = cancerCsvData.map((row) => row[`${selectedCancer} M`]);
+            const femaleData = cancerCsvData.map(
+                (row) => row[`${selectedCancer} F`]
+            );
+
+            const maleTrace = {
+                x: years,
+                y: customTransform(maleData),
+                mode: "lines+markers",
+                name: `${selectedCancer} Male`,
+            };
+
+            const femaleTrace = {
+                x: years,
+                y: customTransform(femaleData),
+                mode: "lines+markers",
+                name: `${selectedCancer} Female`,
+            };
+
+            function customInverseTransform(yTransformed) {
+                return yTransformed.map((value) => {
+                    if (value <= 5) {
+                        return value * 2;
+                    } else {
+                        return Math.pow(10, value - 5);
+                    }
+                });
+            }
+
+            const yTickVals = Array.from(
+                new Set([
+                    ...Array.from({ length: 11 }, (_, i) => i),
+                    ...[20, 50, 100, 200],
+                ])
+            ).sort((a, b) => a - b);
+
+            const layout = {
+                title: "MALE",
+                xaxis: { title: "Year" },
+                yaxis: {
+                    title: "Rate per 100,000 population",
+                    tickvals: customTransform(yTickVals),
+                    ticktext: yTickVals,
+                    range: [0, customTransform([200])[0]],
+                },
+                legend: { title: { text: "Cancer Type" } },
+            };
+
+            const maleLayout = Object.assign({}, layout, { title: "MALE" });
+            const femaleLayout = Object.assign({}, layout, { title: "FEMALE" });
+
+            Plotly.newPlot("male-plot", [maleTrace], maleLayout);
+            Plotly.newPlot("female-plot", [femaleTrace], femaleLayout);
+        }
+
+        // Load CSV file on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            readCSV("souha.csv");
+        });
+
+        // Data for the chart
+        var data = [
+            {
+                x: [
+                    "Total capital stock",
+                    "Military planes and ships",
+                    "Commercial ships",
+                    "Industrial machines",
+                    "Urban housing",
+                    "Buildings and structure",
+                    "Telegraph, telephone, water supply",
+                    "Electricity and gas supply",
+                    "Land transportation",
+                ],
+                y: [25, 100, 81, 34, 33, 25, 16, 11, 10],
+                type: "bar",
+                marker: {
+                    color: "rgb(255, 102, 102)",
+                },
+                text: [
+                    "25%",
+                    "100%",
+                    "81%",
+                    "34%",
+                    "33%",
+                    "25%",
+                    "16%",
+                    "11%",
+                    "10%",
+                ],
+                textposition: "auto",
+            },
+        ];
+
+        var layout = {
+            title: "Loss % by Type of Capital",
+            xaxis: {
+                title: "Type of capital",
+                fixedrange: true,
+                automargin: true,
+            },
+            yaxis: {
+                title: "Loss %",
+                fixedrange: true,
+                automargin: true,
+            },
+            plot_bgcolor: "#f0f0f0",
+            paper_bgcolor: "#f0f0f0",
+        };
+
+        Plotly.newPlot("loss-chart", data, layout);
+    </script>
+</body>
+
+</html>
